@@ -23,15 +23,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-//    R stands RadioGroup
-//    S stands Spinner
-//    C stands Checkbox
-//    T stands TextView
+    //    R stands RadioGroup
+    //    S stands Spinner
+    //    C stands Checkbox
+    //    T stands TextView
 
     //    String viewTypes[] = {"R", "S", "C", "T"};
     List<View> allViewInstance = new ArrayList<View>();
@@ -46,9 +48,11 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout viewProductLayout = (LinearLayout) findViewById(R.id.customOptionLL);
 
         try {
-            jsonObject = new JSONObject(DummyData.dummyData);
-            JSONArray customOptnList = jsonObject.getJSONArray("product_options");
+            /*jsonObject = new JSONObject(DummyData.dummyData);
+            JSONArray customOptnList = jsonObject.getJSONArray("product_options");*/
 
+            JSONObject obj = new JSONObject(loadJSONFromAsset(getAssets().open("data.json")));
+            JSONArray customOptnList = obj.getJSONArray("product_options");
             for (int noOfCustomOpt = 0; noOfCustomOpt < customOptnList.length(); noOfCustomOpt++) {
 
                 JSONObject eachData = customOptnList.getJSONObject(noOfCustomOpt);
@@ -148,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
                             params.bottomMargin = 3;
                             String optionString = checkBoxJSONOpt.getJSONObject(j).getString("variant_name");
                             chk.setOnClickListener(new View.OnClickListener() {
-
                                 @Override
                                 public void onClick(View v) {
                                     String variant_name = v.getTag().toString();
@@ -162,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (eachData.getString("option_type").equals("T")) {
                     TextInputLayout til = new TextInputLayout(MainActivity.this);
-                    til.setHint("error");
+                    til.setHint("Enter your Name");
                     EditText et = new EditText(MainActivity.this);
                     til.addView(et);
                     allViewInstance.add(et);
@@ -171,53 +174,54 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (JSONException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     public void getDataFromDynamicViews(View v) {
         try {
-            JSONArray customOptnList = jsonObject.getJSONArray("product_options");
+            JSONObject obj = new JSONObject(loadJSONFromAsset(getAssets().open("data.json")));
+            JSONArray customOptnList = obj.getJSONArray("product_options");
+
+            //JSONArray customOptnList = jsonObject.getJSONArray("product_options");
             optionsObj = new JSONObject();
             for (int noOfViews = 0; noOfViews < customOptnList.length(); noOfViews++) {
                 JSONObject eachData = customOptnList.getJSONObject(noOfViews);
-
-                if (eachData.getString("option_type").equals("S")) {
-                    Spinner spinner = (Spinner) allViewInstance.get(noOfViews);
-
-                    JSONArray dropDownJSONOpt = eachData.getJSONArray("variants");
-                    String variant_name = dropDownJSONOpt.getJSONObject(spinner.getSelectedItemPosition()).getString("variant_name");
-                    Log.d("variant_name", variant_name + "");
-                    optionsObj.put(eachData.getString("option_name"),
-                            "" + variant_name);
-                }
-
-                if (eachData.getString("option_type").equals("R")) {
-                    RadioGroup radioGroup = (RadioGroup) allViewInstance.get(noOfViews);
-                    RadioButton selectedRadioBtn = (RadioButton) findViewById(radioGroup.getCheckedRadioButtonId());
-                    Log.d("variant_name", selectedRadioBtn.getTag().toString() + "");
-                    optionsObj.put(eachData.getString("option_name"),
-                            "" + selectedRadioBtn.getTag().toString());
-                }
-
-                if (eachData.getString("option_type").equals("C")) {
-                    CheckBox tempChkBox = (CheckBox) allViewInstance.get(noOfViews);
-                    if (tempChkBox.isChecked()) {
-                        optionsObj.put(eachData.getString("option_name"), tempChkBox.getTag().toString());
-                    }
-                    Log.d("variant_name", tempChkBox.getTag().toString() + "");
-                }
-                if (eachData.getString("option_type").equals("T")) {
-                    TextView textView = (TextView) allViewInstance.get(noOfViews);
-                    if (!textView.getText().toString().equalsIgnoreCase(""))
-                        optionsObj.put(eachData.getString("option_name"), textView.getText().toString());
-                    else
-                        optionsObj.put(eachData.getString("option_name"), textView.getText().toString());
-                    Log.d("variant_name", textView.getText().toString() + "");
+                switch (eachData.getString("option_type").toUpperCase()) {
+                    case "S":
+                        Spinner spinner = (Spinner) allViewInstance.get(noOfViews);
+                        JSONArray dropDownJSONOpt = eachData.getJSONArray("variants");
+                        String variant_name = dropDownJSONOpt.getJSONObject(spinner.getSelectedItemPosition()).getString("variant_name");
+                        Log.d("variant_name", variant_name);
+                        optionsObj.put(eachData.getString("option_name"), variant_name);
+                        break;
+                    case "R":
+                        RadioGroup radioGroup = (RadioGroup) allViewInstance.get(noOfViews);
+                        RadioButton selectedRadioBtn = (RadioButton) findViewById(radioGroup.getCheckedRadioButtonId());
+                        Log.d("variant_name", selectedRadioBtn.getTag().toString() + "");
+                        optionsObj.put(eachData.getString("option_name"), selectedRadioBtn.getTag().toString());
+                        break;
+                    case "C":
+                        CheckBox tempChkBox = (CheckBox) allViewInstance.get(noOfViews);
+                        if (tempChkBox.isChecked()) {
+                            optionsObj.put(eachData.getString("option_name"), tempChkBox.getTag().toString());
+                        }
+                        Log.d("variant_name", tempChkBox.getTag().toString());
+                        break;
+                    case "T":
+                        TextView textView = (TextView) allViewInstance.get(noOfViews);
+                        if (!textView.getText().toString().equalsIgnoreCase(""))
+                            optionsObj.put(eachData.getString("option_name"), textView.getText().toString());
+                        else
+                            optionsObj.put(eachData.getString("option_name"), textView.getText().toString());
+                        Log.d("variant_name", textView.getText().toString() + "");
+                        break;
                 }
             }
 
             String outputData = (optionsObj + "").replace(",", "\n");
-            outputData = outputData.replaceAll("[{}]","");
+            outputData = outputData.replaceAll("[{}]", "");
             ((TextView) findViewById(R.id.showData)).setText(outputData);
             Log.d("optionsObj", optionsObj + "");
             hideSoftKeyboard(findViewById(R.id.layout));
@@ -226,11 +230,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public String loadJSONFromAsset(InputStream inputStream) {
+        String json = null;
+        try {
+            int size = inputStream.available();
+            byte[] buffer = new byte[size];
+            inputStream.read(buffer);
+            inputStream.close();
+            json = new String(buffer, "UTF-8");
+        } catch (Exception ex) {
+
+            return null;
+        }
+        return json;
+    }
+
     public void hideSoftKeyboard(View v) {
         if (getCurrentFocus() != null) {
             InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
             inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
         }
     }
-
 }
